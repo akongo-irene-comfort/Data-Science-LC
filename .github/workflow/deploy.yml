@@ -1,4 +1,4 @@
-name: Deploy to Render
+name: Deploy to Railway
 
 on:
   push:
@@ -11,18 +11,33 @@ jobs:
     timeout-minutes: 5
 
     steps:
-      - name: Trigger Render Deployment
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to Railway
         run: |
-          response=$(curl -s -o /dev/null -w "%{http_code}" -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}")
-          echo "Response code: $response"
-          if [ $response -eq 200 ] || [ $response -eq 201 ]; then
-            echo "✅ Deployment triggered successfully!"
+          if [ -z "${{ secrets.RAILWAY_TOKEN }}" ]; then
+            echo "⚠️  RAILWAY_TOKEN not set. Railway will auto-deploy from GitHub."
+            echo "✅ Push to main branch will trigger deployment automatically."
           else
-            echo "⚠️  Unexpected response code: $response"
+            response=$(curl -s -o /dev/null -w "%{http_code}" \
+              -X POST "https://backboard.railway.app/graphql/v2" \
+              -H "Authorization: Bearer ${{ secrets.RAILWAY_TOKEN }}" \
+              -H "Content-Type: application/json" \
+              -d '{"query":"mutation { deploymentTrigger(projectId: \"${{ secrets.RAILWAY_PROJECT_ID }}\") { id } }"}')
+            
+            echo "Response code: $response"
+            if [ $response -eq 200 ]; then
+              echo "✅ Deployment triggered successfully!"
+            else
+              echo "⚠️  Unexpected response code: $response"
+            fi
           fi
 
-      - name: Notify deployment
+      - name: Deployment Info
         run: |
-          echo "🚀 Deployment webhook sent to Render"
-          echo "📊 Check your Render dashboard for deployment status"
-          echo "🔗 Dashboard: https://dashboard.render.com"
+          echo "🚀 Deployment to Railway initiated"
+          echo "📊 Check your Railway dashboard for deployment status"
+          echo "🔗 Dashboard: https://railway.app/dashboard"
+          echo ""
+          echo "Railway handles data science dependencies much better than Render!"

@@ -1,6 +1,5 @@
-# Web Framework (Required for deployment)
+# Web Framework
 streamlit==1.31.0
-gunicorn==21.2.0
 
 # Core Data Science Libraries
 pandas==2.1.4
@@ -17,11 +16,6 @@ plotly==5.18.0
 joblib==1.3.2
 xgboost==2.0.3
 
-# Model Interpretation (Lightweight alternatives)
+# Model Interpretation
 shap==0.44.0
 lime==0.2.0.1
-
-# Remove these for deployment - they're for local development only:
-# jupyter==1.0.0
-# ipykernel==6.27.1
-# tensorflow==2.15.0  # Very heavy - only include if absolutely necessary
