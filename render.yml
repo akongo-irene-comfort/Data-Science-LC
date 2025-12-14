@@ -1,13 +1,16 @@
 services:
   - type: web
-    name: nextjs-app
-    runtime: node
-    buildCommand: npm ci && npm run build
-    startCommand: npm run start
+    name: data-science-lc
+    env: python
+    region: oregon
+    plan: free
+    branch: main
+    buildCommand: |
+      python -m pip install --upgrade pip
+      PIP_ONLY_BINARY=:all: pip install -r requirements.txt
+    startCommand: streamlit run app.py --server.port=$PORT --server.address=0.0.0.0
     envVars:
-      - key: NODE_ENV
-        value: production
-      - key: PORT
-        value: 3000
-    healthCheckPath: /
-    autoDeploy: true
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: PIP_NO_CACHE_DIR
+        value: 1
