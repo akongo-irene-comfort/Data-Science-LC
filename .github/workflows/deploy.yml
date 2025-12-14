@@ -36,8 +36,13 @@ jobs:
 
       - name: Deployment Info
         run: |
-          echo "🚀 Deployment to Railway initiated"
-          echo "📊 Check your Railway dashboard for deployment status"
+          echo "✅ Deployment to Railway successful!"
+          echo "🚀 Your app is now live!"
+          echo "📊 Check your Railway dashboard for the public URL"
           echo "🔗 Dashboard: https://railway.app/dashboard"
           echo ""
-          echo "Railway handles data science dependencies much better than Render!"
+          echo "To get your public URL:"
+          echo "1. Go to Railway Dashboard"
+          echo "2. Click on your service"
+          echo "3. Go to Settings → Networking"
+          echo "4. Click 'Generate Domain' if you haven't already"
