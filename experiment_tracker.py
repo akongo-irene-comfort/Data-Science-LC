@@ -109,7 +109,7 @@ def start_run(run_name=None):
 
 def log_params(params):
     """Log parameters"""
-    global _tracker
+    # Removed 'global _tracker' - only reading, not assigning
     if _tracker is not None and _tracker.current_run is not None:
         _tracker.log_params(params)
     else:
@@ -118,7 +118,7 @@ def log_params(params):
 
 def log_metrics(metrics):
     """Log metrics"""
-    global _tracker
+    # Removed 'global _tracker' - only reading, not assigning
     if _tracker is not None and _tracker.current_run is not None:
         _tracker.log_metrics(metrics)
     else:
@@ -149,4 +149,3 @@ class RunContext:
 def start_run_context(run_name=None):
     """Create a context manager for a run (similar to mlflow.start_run as context manager)"""
     return RunContext(run_name)
-
