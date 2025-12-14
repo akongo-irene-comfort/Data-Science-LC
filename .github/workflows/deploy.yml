@@ -1,0 +1,28 @@
+name: Deploy to Render
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:  # Allow manual triggers
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Trigger Render Deployment
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}")
+          echo "Response code: $response"
+          if [ $response -eq 200 ] || [ $response -eq 201 ]; then
+            echo "✅ Deployment triggered successfully!"
+          else
+            echo "⚠️  Unexpected response code: $response"
+          fi
+
+      - name: Notify deployment
+        run: |
+          echo "🚀 Deployment webhook sent to Render"
+          echo "📊 Check your Render dashboard for deployment status"
+          echo "🔗 Dashboard: https://dashboard.render.com"
