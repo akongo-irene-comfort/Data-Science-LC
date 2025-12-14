@@ -1,0 +1,22 @@
+{
+  "run_name": "Neural_Network",
+  "start_time": "2025-12-11T20:47:38.455364",
+  "parameters": {
+    "epochs": 100,
+    "batch_size": 32,
+    "architecture": "64-32-16-1"
+  },
+  "metrics": {
+    "accuracy": 0.7066666666666667,
+    "precision": 0.8409090909090909,
+    "recall": 0.7115384615384616,
+    "f1": 0.7708333333333334,
+    "roc_auc": 0.7617056856187291
+  },
+  "model_info": {
+    "model_type": "NeuralNetwork",
+    "model_path": "models/neural_network_model.h5",
+    "saved_at": "2025-12-11T20:47:46.676585"
+  },
+  "end_time": "2025-12-11T20:47:46.683315"
+}
