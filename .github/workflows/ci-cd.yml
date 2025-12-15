@@ -2,50 +2,54 @@ name: ML Model CI/CD Pipeline
 
 on:
   push:
-    branches: [main, develop]
+    branches: [ main, develop ]
   workflow_dispatch:
 
 jobs:
   test:
-    name: Run Tests
+    name: 🧪 Run Python Tests
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          # REMOVED cache option to avoid warnings
-      
+
       - name: Install dependencies
+        working-directory: python_deployment
         run: |
-          cd python_deployment
+          python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install pytest pytest-cov
-      
+
       - name: Run tests
+        working-directory: python_deployment
         run: |
-          cd python_deployment
-          python -m pytest tests/ -v || echo "No tests found, continuing..."
+          pytest tests/ -v || echo "⚠️ No tests found, skipping..."
 
   build:
-    name: Build Docker Image
+    name: 🐳 Build & Push Docker Image
     runs-on: ubuntu-latest
     needs: test
+
     steps:
-      - uses: actions/checkout@v4
-      
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      
-      - name: Log in to GitHub Container Registry
+
+      - name: Login to GHCR
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
@@ -61,14 +65,15 @@ jobs:
     needs: build
     if: github.ref == 'refs/heads/develop'
     environment: staging
+
     steps:
-      - name: Trigger Render Staging
+      - name: Trigger Render Staging Deploy
         env:
           RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
         run: |
-          echo "🚀 Deploying to Staging..."
+          echo "🚀 Deploying to staging..."
           curl -X POST "$RENDER_DEPLOY_HOOK_URL"
-          echo "✅ Staging deployment triggered!"
+          echo "✅ Staging deployment triggered"
 
   deploy-production:
     name: 🚀 Deploy to Production
@@ -76,51 +81,30 @@ jobs:
     needs: build
     if: github.ref == 'refs/heads/main'
     environment: production
+
     steps:
-      - name: Trigger Render Production
+      - name: Trigger Render Production Deploy
         env:
-          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_PROD_DEPLOY_HOOK_URL }}
         run: |
-          echo "🚀 Deploying to Production..."
-          
-          # Get service ID (assuming you only have one service)
-          echo "Getting service ID..."
-          SERVICE_ID=$(curl -s "https://api.render.com/v1/services" \
-            -H "Authorization: Bearer ${RENDER_API_KEY}" \
-            | python3 -c "import sys,json; data=json.load(sys.stdin); print(data[0]['id'] if data else '')")
-          
-          if [ -z "$SERVICE_ID" ]; then
-            echo "❌ ERROR: Could not find service!"
-            exit 1
-          fi
-          
-          echo "Service ID: $SERVICE_ID"
-          echo "Triggering deployment..."
-          
-          curl -X POST "https://api.render.com/v1/services/$SERVICE_ID/deploys" \
-            -H "Authorization: Bearer ${RENDER_API_KEY}" \
-            -H "Content-Type: application/json" \
-            -d '{"clearCache": "clear"}'
-          
-          echo "✅ Production deployment triggered!"
-      
-      - name: Verify deployment
+          echo "🚀 Deploying to production..."
+          curl -X POST "$RENDER_DEPLOY_HOOK_URL"
+          echo "✅ Production deployment triggered"
+
+      - name: Verify deployment health
         env:
           PRODUCTION_URL: ${{ secrets.PRODUCTION_URL }}
         run: |
-          echo "🔄 Checking production health..."
+          echo "🔍 Checking production health..."
           sleep 60
-          echo "Testing $PRODUCTION_URL..."
-          
-          # Try 3 times
-          for i in {1..3}; do
-            if curl -s -f "$PRODUCTION_URL/health" > /dev/null; then
-              echo "✅ Production is healthy!"
+
+          for i in 1 2 3; do
+            if curl -f "$PRODUCTION_URL/health"; then
+              echo "✅ Production is healthy"
               exit 0
-            else
-              echo "Attempt $i failed. Waiting 15 seconds..."
-              sleep 15
             fi
+            echo "Retry $i failed, waiting..."
+            sleep 15
           done
-          
-          echo "⚠️ Could not verify health, but deployment was triggered."
+
+          echo "⚠️ Health check could not be verified"
