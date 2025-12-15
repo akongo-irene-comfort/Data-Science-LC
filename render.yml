@@ -1,32 +1,32 @@
 services:
+  # Production Service
   - type: web
     name: loan-prediction-api
     env: docker
     region: oregon
     plan: free
     branch: main
-    dockerfilePath: ./python_deployment/Dockerfile
-    dockerContext: ./python_deployment
-    healthCheckPath: /health
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /
     envVars:
       - key: PORT
-        value: 8000
+        value: 8501
       - key: ENVIRONMENT
         value: production
     autoDeploy: true
 
+  # Staging Service
   - type: web
     name: loan-prediction-api-staging
     env: docker
     region: oregon
     plan: free
     branch: develop
-    dockerfilePath: ./python_deployment/Dockerfile
-    dockerContext: ./python_deployment
-    healthCheckPath: /health
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /
     envVars:
       - key: PORT
-        value: 8000
+        value: 8501
       - key: ENVIRONMENT
         value: staging
     autoDeploy: true
