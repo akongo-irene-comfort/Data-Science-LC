@@ -1,17 +1,32 @@
 services:
   - type: web
-    name: data-science-lc
-    env: python
-    runtime: python-3.11.9
+    name: loan-prediction-api
+    env: docker
     region: oregon
     plan: free
     branch: main
-    buildCommand: |
-      python -m pip install --upgrade pip
-      pip install -r requirements.txt
-    startCommand: streamlit run app.py --server.port=$PORT --server.address=0.0.0.0
+    dockerfilePath: ./python_deployment/Dockerfile
+    dockerContext: ./python_deployment
+    healthCheckPath: /health
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.9
-      - key: PIP_NO_CACHE_DIR
-        value: 1
+      - key: PORT
+        value: 8000
+      - key: ENVIRONMENT
+        value: production
+    autoDeploy: true
+
+  - type: web
+    name: loan-prediction-api-staging
+    env: docker
+    region: oregon
+    plan: free
+    branch: develop
+    dockerfilePath: ./python_deployment/Dockerfile
+    dockerContext: ./python_deployment
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: ENVIRONMENT
+        value: staging
+    autoDeploy: true

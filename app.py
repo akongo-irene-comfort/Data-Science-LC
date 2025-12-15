@@ -39,8 +39,8 @@ def check_files():
     return True
 
 def main():
-    # Railway provides PORT, fallback to 8501
-    port = os.environ.get('PORT', '8501')
+    # Railway provides PORT, fallback to 8000
+    port = os.environ.get('PORT', '8000')
     
     print(f"=" * 60)
     print(f"🚀 Starting Loan Prediction App")
