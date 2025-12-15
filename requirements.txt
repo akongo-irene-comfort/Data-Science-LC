@@ -1,15 +1,18 @@
+# Use pre-compiled wheels for faster installation
+--only-binary=:all:
+
 # Web Framework
 streamlit==1.31.0
 
 # Core Data Science Libraries
-pandas==2.1.4
+pandas==2.2.0
 numpy==1.26.4
 scikit-learn==1.4.0
 scipy==1.12.0
 
 # Visualization
-matplotlib==3.8.2
-seaborn==0.13.0
+matplotlib==3.8.3
+seaborn==0.13.2
 plotly==5.18.0
 
 # Model Utilities

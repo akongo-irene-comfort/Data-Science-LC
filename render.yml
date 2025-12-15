@@ -2,12 +2,13 @@ services:
   - type: web
     name: data-science-lc
     env: python
+    runtime: python-3.11.9
     region: oregon
     plan: free
     branch: main
     buildCommand: |
       python -m pip install --upgrade pip
-      PIP_ONLY_BINARY=:all: pip install -r requirements.txt
+      pip install -r requirements.txt
     startCommand: streamlit run app.py --server.port=$PORT --server.address=0.0.0.0
     envVars:
       - key: PYTHON_VERSION
