@@ -21,4 +21,4 @@ xgboost==2.0.3
 
 # Model Interpretation
 shap==0.44.0
-lime==0.2.0.1
+lime==0.2.0.2
