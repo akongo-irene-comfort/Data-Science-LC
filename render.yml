@@ -1,20 +1,4 @@
 services:
-  # Production Service
-  - type: web
-    name: loan-prediction-api
-    env: docker
-    region: oregon
-    plan: free
-    branch: main
-    dockerfilePath: ./Dockerfile
-    healthCheckPath: /
-    envVars:
-      - key: PORT
-        value: 8501
-      - key: ENVIRONMENT
-        value: production
-    autoDeploy: true
-
   # Staging Service
   - type: web
     name: loan-prediction-api-staging
