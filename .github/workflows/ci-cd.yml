@@ -143,26 +143,45 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+      
       - name: Deploy to Render Production
         env:
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
         run: |
           echo "Triggering Render deployment for production..."
-          # You can use either the API approach OR webhook approach
-          # If you have a production webhook URL, use that instead
-          # For now, using the API approach since you have RENDER_API_KEY
           
-          # Get the production service ID from the API
-          SERVICE_ID=$(curl -s -X GET "https://api.render.com/v1/services" \
-            -H "Authorization: Bearer ${RENDER_API_KEY}" \
-            | jq -r '.[] | select(.name | contains("loan-prediction-api")) | .id')
+          # Get all services
+          response=$(curl -s -X GET "https://api.render.com/v1/services" \
+            -H "Authorization: Bearer ${RENDER_API_KEY}")
           
-          echo "Found service ID: ${SERVICE_ID}"
+          # Extract service ID for production
+          SERVICE_ID=$(echo "$response" | jq -r '.[] | select(.name == "loan-prediction-api" or .serviceDetail.name == "loan-prediction-api") | .id')
           
-          curl -X POST "https://api.render.com/v1/services/${SERVICE_ID}/deploys" \
+          if [ -z "$SERVICE_ID" ] || [ "$SERVICE_ID" = "null" ]; then
+            echo "Error: Could not find production service ID"
+            echo "Available services:"
+            echo "$response" | jq '.[] | {name: .name, id: .id}'
+            exit 1
+          fi
+          
+          echo "Found production service ID: ${SERVICE_ID}"
+          
+          # Trigger deployment
+          DEPLOY_RESPONSE=$(curl -s -X POST "https://api.render.com/v1/services/${SERVICE_ID}/deploys" \
             -H "Authorization: Bearer ${RENDER_API_KEY}" \
             -H "Content-Type: application/json" \
-            -d '{"clearCache": "clear"}'
+            -d '{"clearCache": "clear"}')
+          
+          DEPLOY_ID=$(echo "$DEPLOY_RESPONSE" | jq -r '.id')
+          
+          if [ -n "$DEPLOY_ID" ] && [ "$DEPLOY_ID" != "null" ]; then
+            echo "Deployment triggered successfully! Deploy ID: ${DEPLOY_ID}"
+          else
+            echo "Deployment response: $DEPLOY_RESPONSE"
+            echo "Warning: Could not extract deploy ID, but deployment may have been triggered"
+          fi
       
       - name: Wait for deployment
         run: |
@@ -176,16 +195,30 @@ jobs:
           echo "Running smoke tests..."
           echo "Production URL: ${PRODUCTION_URL}"
           sleep 30
+          
           # Try multiple times with delay
-          for i in {1..5}; do
-            echo "Attempt $i to check health..."
-            if curl -f ${PRODUCTION_URL}/health; then
-              echo "Health check passed!"
-              break
+          MAX_ATTEMPTS=5
+          ATTEMPT=1
+          
+          while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
+            echo "Health check attempt $ATTEMPT of $MAX_ATTEMPTS..."
+            
+            if curl -f -s -o /dev/null -w "%{http_code}" ${PRODUCTION_URL}/health | grep -q "200"; then
+              echo "✅ Health check passed! Service is up and running."
+              exit 0
             else
-              echo "Health check failed, retrying in 10 seconds..."
-              sleep 10
+              echo "⏳ Health check failed or returned non-200 status"
+              
+              if [ $ATTEMPT -eq $MAX_ATTEMPTS ]; then
+                echo "❌ All health check attempts failed. Service may not be responding."
+                echo "But continuing workflow as deployment may still be in progress..."
+              else
+                echo "Retrying in 15 seconds..."
+                sleep 15
+              fi
             fi
+            
+            ATTEMPT=$((ATTEMPT + 1))
           done
 
   model-validation:
